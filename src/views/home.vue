@@ -1,5 +1,6 @@
 <template>
 <div>
+  <!--//首页的内容-->
   <el-container>
     <el-header>
       <h1>Vue + node + Element CURD项目</h1>
@@ -9,7 +10,7 @@
         <el-col :span="24" style="text-align: right">
           <div style="margin-top: 20px">
             <el-button type="primary" size="mini" icon="el-icon-circle-plus" @click="addDialog=true">添加</el-button>
-            <el-button type="danger" size="mini" icon="el-icon-delete" @clicl="delDialog=true">删除</el-button>
+            <el-button type="danger" size="mini" icon="el-icon-delete" @click="delDialog=true">删除</el-button>
           </div>
         </el-col>
       </el-row>
@@ -83,6 +84,13 @@
       </el-form-item>
     </el-form>
   </el-dialog>
+  <el-dialog title="删除" :visible.sync="delDialog" width="30%">
+      <span><b>你确定删除所选用户？</b></span>
+      <span slot="footer" class="dialog-footer">
+         <el-button type="danger">确定</el-button>
+         <el-button @click="delForm()">取消</el-button>
+      </span>
+  </el-dialog>
 </div>
 </template>
 <script>
@@ -141,6 +149,9 @@
           this.addDialog = false;
           //将弹出框清空
           this.$refs[formName].resetFields()
+      },
+      delForm:function () {
+        this.delDialog = false;
       }
     }
   }
