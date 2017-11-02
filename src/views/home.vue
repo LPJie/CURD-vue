@@ -44,8 +44,8 @@
             </el-table-column>
             <el-table-column label="操作" width="200">
                 <template slot-scope="scope">
-                  <el-button type="success" size="mini">编辑</el-button>
-                  <el-button type="danger" size="mini">删除</el-button>
+                  <el-button type="success" size="mini" @click="editButton(scope.row)">编辑</el-button>
+                  <el-button type="danger" size="mini" @click="delButton(scope.row._id)">删除</el-button>
                 </template>
             </el-table-column>
           </el-table>
@@ -69,6 +69,35 @@
   </el-container>
   <!--//弹出框-->
   <el-dialog title="添加新用户" :visible.sync="addDialog" @close="resetForm('addForm')">
+    <el-form :model="addForm" :rules="addRules" ref="addForm" label-width="100px">
+      <el-form-item label="用户名" prop="username">
+        <el-input type="text" v-model="addForm.username" autoComplete="off"></el-input>
+      </el-form-item>
+      <el-form-item label="姓 名" prop="name">
+        <el-input type="text" v-model="addForm.name" autoComplete="off"></el-input>
+      </el-form-item>
+      <el-form-item label="密 码" prop="password">
+        <el-input type="text" v-model="addForm.password" autoComplete="off"></el-input>
+      </el-form-item>
+      <el-form-item label="确认密码" prop="repeat_password">
+        <el-input type="text" v-model="addForm.repeat_password" autoComplete="off"></el-input>
+      </el-form-item>
+      <el-form-item label="电 话" prop="tel">
+        <el-input type="type" v-model.number="addForm.tel" autoComplete="off"></el-input>
+      </el-form-item>
+      <el-form-item label="邮 箱" prop="email">
+        <el-input type="text" v-model="addForm.email" autoComplete="off"></el-input>
+      </el-form-item>
+      <el-form-item label="是否启用" prop="is_active">
+        <el-switch v-model="addForm.is_active"></el-switch>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" @click="submitForm('addForm')">提交</el-button>
+        <el-button @click="resetForm('addForm')">取消</el-button>
+      </el-form-item>
+    </el-form>
+  </el-dialog>
+  <el-dialog title="编辑用户" >
     <el-form :model="addForm" :rules="addRules" ref="addForm" label-width="100px">
       <el-form-item label="用户名" prop="username">
         <el-input type="text" v-model="addForm.username" autoComplete="off"></el-input>
@@ -223,7 +252,34 @@
       pageChange:function (value) {
         this.getUsers(value)
       },
-      //删除的弹出框
+      //单个删除弹出框
+      delButton:function(row) {
+//        console.log(row)
+        this.$confirm('此操作将永久删除此用户，是否删除？', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          axios.post(`/users/delOne/${row}`).then(() => {
+            if (status == '0') {
+              this.$message({type: 'success', message: '删除成功！'})
+              this.getUsers('addForm');
+            }
+          }).catch(() => {
+            this.$message({
+              type: 'info',
+              message: '已取消删除！'
+            })
+          })
+        }).catch(err=>{
+            console.log(err)
+        })
+      },
+      editButton:function (row) {
+        var row = row.data;
+//        console.log(row)
+      },
+      //批量删除的弹出框
       delForm:function () {
         this.delDialog = false;
       }
@@ -236,7 +292,7 @@
   }
   .block {
     margin-top: 30px;
-    margin-right: 50px;
+    margin-right: 70px;
     float: right;
   }
 </style>
