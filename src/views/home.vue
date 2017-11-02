@@ -16,31 +16,30 @@
       </el-row>
       <el-row>
         <el-col :span="24">
-          <el-table :data="result" tooltip-effect="dark" style="width: 100%" >
-            <el-table-column type="selection" width="55" sorttable>
+          <el-table :data="userList" tooltip-effect="dark" style="width: 100%" >
+            <el-table-column type="selection" width="55">
 
             </el-table-column>
-            <el-table-column prop="username" label="用户名" width="120" sorttable>
+            <el-table-column prop="username" label="用户名" width="120">
 
             </el-table-column>
-            <el-table-column prop="name" label="姓名" width="80" sorttable>
+            <el-table-column prop="name" label="姓名" width="120" sortable>
 
             </el-table-column>
-            <el-table-column prop="address" label="地址" sorttable>
+            <el-table-column prop="tel" label="电话">
 
             </el-table-column>
-            <el-table-column prop="tel" label="电话" sorttable>
+            <el-table-column prop="email" label="邮箱">
 
             </el-table-column>
-            <el-table-column prop="email" label="邮箱" sorttable>
-
-            </el-table-column>
-            <el-table-column prop="create_date" label="注册日期" sorttable>
+            <el-table-column prop="create_time" label="注册日期" sortable>
 
             </el-table-column>
             <el-table-column prop="is_active" label="状态" width="75">
               <template slot-scope="scope">
-                <el-tag type="success" size="mini">{{scope.row.is_active}}</el-tag>
+                <el-tag type="success" size="mini" :type="scope.row.is_active ==true? 'success':'danger'">
+                  {{scope.row.is_active|formatter}}
+                </el-tag>
               </template>
             </el-table-column>
             <el-table-column label="操作" width="200">
@@ -52,10 +51,24 @@
           </el-table>
         </el-col>
       </el-row>
+      <!--//分页-->
+      <el-row>
+        <el-col :span="24">
+          <div class="block">
+            <el-pagination
+              layout="prev, pager, next"
+              :total="total"
+              :pageSize="5"
+              @current-change="pageChange"
+            >
+            </el-pagination>
+          </div>
+        </el-col>
+      </el-row>
     </el-main>
   </el-container>
   <!--//弹出框-->
-  <el-dialog title="添加新用户" :visible.sync="addDialog">
+  <el-dialog title="添加新用户" :visible.sync="addDialog" @close="resetForm('addForm')">
     <el-form :model="addForm" :rules="addRules" ref="addForm" label-width="100px">
       <el-form-item label="用户名" prop="username">
         <el-input type="text" v-model="addForm.username" autoComplete="off"></el-input>
@@ -96,8 +109,12 @@
 <script>
   import axios from 'axios'
   export default{
-      name:'Home',
-      data (){
+    name:'Home',
+    //组件渲染完毕之后调用getUsers，来获取所有的用户信息
+    mounted:function(){
+      this.getUsers();
+    },
+    data (){
           var checkPass = (rule,value,callback)=> {
               if(value == ''){
                   callback(new Error('密码不能为空！'))
@@ -122,35 +139,7 @@
           addDialog:false,
           //编辑的对话框
           delDialog:false,
-            result:[
-              {
-                username:'zhangsan',
-                name:"张三",
-                address:'郑州市报国大厦',
-                tel:14213454564,
-                email:'125@qq.com',
-                create_date:'2017/10/1',
-                is_active:'激活'
-              },
-              {
-                username:'lisi',
-                name:"李四",
-                address:'郑州市报国大厦',
-                tel:1154545456,
-                email:'123@qq.com',
-                create_date:'2017/11/1',
-                is_active:'激活'
-              },
-              {
-                username:'wangwu',
-                name:"王五",
-                address:'郑州市报国大厦',
-                tel:11545454546,
-                email:'124@qq.com',
-                create_date:'2017/11/6',
-                is_active:'激活'
-              }
-            ],
+          userList:[],
           addRules:{
             username:[
               {required:true,message:'请输入用户名！',trigger:'blur'},
@@ -175,7 +164,8 @@
             email:[
               {required:true,type:'email',message:'请输入正确的邮箱',trigger:'blur'},
             ]
-          }
+          },
+          total:0,
         }
       },
     methods:{
@@ -185,9 +175,19 @@
             if(valid){
                 //提交
 //              alert('提交成功！');
-              axios.post('./users/create',this.addForm).then(function (response) {
-                console.log(response)
-              }).catch(function (err) {
+              axios.post('./users/create',this.addForm)
+                .then((response)=>{
+                    var res = response.data;
+                    if(res.status == '0'){
+                        //返回成功的信息
+                      this.$message.success('新增用户成功！')
+                      this.resetForm('addForm');
+                      this.getUsers();
+                    }else{
+                        //返回了错误提示消息的时候
+                      this.$message.error(res.message);
+                    }
+              }).catch((err)=>{
                 console.log(err)
               })
             }else{
@@ -195,12 +195,35 @@
             }
         })
       },
+      //添加的弹出框
       resetForm:function(formName){
           //将弹出框关闭
           this.addDialog = false;
           //将弹出框清空
           this.$refs[formName].resetFields()
       },
+      //获取数据
+      getUsers:function (page) {
+        axios.get('/users/getUsers',{
+            //分页
+            params:{
+              page:page || 1,//当前页数
+              pageSize:5 //每五条分一页
+            }
+        }).then(response=>{
+            var res = response.data;
+            this.userList = res.userList;
+            this.total = res.count;
+//            console.log(this.total)
+        }).catch(err=>{
+            console.log(err)
+        })
+      },
+      //分页
+      pageChange:function (value) {
+        this.getUsers(value)
+      },
+      //删除的弹出框
       delForm:function () {
         this.delDialog = false;
       }
@@ -210,5 +233,10 @@
 <style>
   h1 {
     text-align: center;
+  }
+  .block {
+    margin-top: 30px;
+    margin-right: 50px;
+    float: right;
   }
 </style>
