@@ -70,7 +70,7 @@
         <el-input type="text" v-model="addForm.repeat_password" autoComplete="off"></el-input>
       </el-form-item>
       <el-form-item label="电 话" prop="tel">
-        <el-input type="text" v-model="addForm.tel" autoComplete="off"></el-input>
+        <el-input type="type" v-model.number="addForm.tel" autoComplete="off"></el-input>
       </el-form-item>
       <el-form-item label="邮 箱" prop="email">
         <el-input type="text" v-model="addForm.email" autoComplete="off"></el-input>
@@ -79,7 +79,7 @@
         <el-switch v-model="addForm.is_active"></el-switch>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary">提交</el-button>
+        <el-button type="primary" @click="submitForm('addForm')">提交</el-button>
         <el-button @click="resetForm('addForm')">取消</el-button>
       </el-form-item>
     </el-form>
@@ -94,9 +94,19 @@
 </div>
 </template>
 <script>
+  import axios from 'axios'
   export default{
       name:'Home',
       data (){
+          var checkPass = (rule,value,callback)=> {
+              if(value == ''){
+                  callback(new Error('密码不能为空！'))
+              }else if(value !== this.addForm.password){
+                callback(new Error('两次密码不一致！'));
+              }else{
+                callback();
+              }
+          }
         return{
             //用于收集新增用户的对象
           addForm:{
@@ -140,10 +150,51 @@
                 create_date:'2017/11/6',
                 is_active:'激活'
               }
+            ],
+          addRules:{
+            username:[
+              {required:true,message:'请输入用户名！',trigger:'blur'},
+              {min:3,max:12,message:'请输入合法的字符,长度3-12位！',trigger:'blur'}
+            ],
+            name:[
+              {required:true,message:'请输入姓名！',trigger:'blur'},
+              {min:2,max:5,message:'请输入合法的名字!',trigger:'blur'}
+            ],
+            password:[
+              {required:true,message:'请输入密码!',trigger:'blur'},
+              {min:6,max:12,message:'请输入正确的密码!',trigger:'blur'}
+            ],
+            repeat_password:[
+              {validator:checkPass,trigger:'blur'}
+//              {required:true,message:'请再次输入密码！',trigger:'blur'},
+//              {min:6,max:12,message:'请再次输入正确的密码！',trigger:'blur'}
+            ],
+            tel:[
+              {required:true,type:'number',message:'请填写手机号码！',trigger:'blur'},
+            ],
+            email:[
+              {required:true,type:'email',message:'请输入正确的邮箱',trigger:'blur'},
             ]
+          }
         }
       },
     methods:{
+          //表单提交
+      submitForm:function (formName) {
+        this.$refs[formName].validate((valid)=>{
+            if(valid){
+                //提交
+//              alert('提交成功！');
+              axios.post('./users/create',this.addForm).then(function (response) {
+                console.log(response)
+              }).catch(function (err) {
+                console.log(err)
+              })
+            }else{
+                return false;
+            }
+        })
+      },
       resetForm:function(formName){
           //将弹出框关闭
           this.addDialog = false;
